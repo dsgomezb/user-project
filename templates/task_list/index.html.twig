@@ -1,0 +1,45 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Tareas del Usuario #{{ user.id }} - {{ user.name }}{% endblock %}
+
+{% block body %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow border-0">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-4">Tareas del Usuario #{{ user.id }} - {{ user.name }}</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if tasks is empty %}
+                            <div class="alert alert-warning m-3">
+                                <strong>No hay tareas registradas.</strong>
+                            </div>
+                        {% else %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>📌 Tarea</th>
+                                            <th>📁 Proyecto</th>
+                                            <th class="text-end">💰 Tarifa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for task in tasks %}
+                                            <tr>
+                                                <td>{{ task.task }}</td>
+                                                <td>{{ task.project }}</td>
+                                                <td class="text-end">${{ task.rate|number_format(0, ',', '.') }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
