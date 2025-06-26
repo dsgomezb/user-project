@@ -2,7 +2,7 @@
 
 namespace App\Controller\Api;
 
-use App\Entity\User;
+use App\Repository\UserRepository;
 use App\Repository\TaskRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -12,8 +12,16 @@ use Symfony\Component\Routing\Annotation\Route;
 class UserTaskController extends AbstractController
 {
     #[Route('/{id}/tasks', name: 'tasks', methods: ['GET'])]
-    public function tasks(User $user, TaskRepository $taskRepo): JsonResponse
+    public function tasks(int $id, UserRepository $userRepo, TaskRepository $taskRepo): JsonResponse
     {
+        $user = $userRepo->find($id);
+
+        if (!$user) {
+            return $this->json([
+                'error' => 'Usuario no encontrado'
+            ], 404);
+        }
+
         $tasks = [];
 
         foreach ($user->getUserProjects() as $userProject) {
@@ -26,6 +34,12 @@ class UserTaskController extends AbstractController
             }
         }
 
-        return $this->json($tasks);
+        return $this->json([
+            'user' => [
+                'id' => $user->getId(),
+                'name' => $user->getName()
+            ],
+            'tasks' => $tasks
+        ]);
     }
 }
