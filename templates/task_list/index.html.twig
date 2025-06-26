@@ -1,45 +1,89 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Tareas del Usuario #{{ user.id }} - {{ user.name }}{% endblock %}
+{% block title %}
+    {% if user %}
+        Tareas del Usuario #{{ user.id }} - {{ user.name }}
+    {% else %}
+        Tareas del Usuario
+    {% endif %}
+{% endblock %}
 
 {% block body %}
-    <div class="container py-4">
-        <div class="row justify-content-center">
-            <div class="col-lg-10">
-                <div class="card shadow border-0">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-4">Tareas del Usuario #{{ user.id }} - {{ user.name }}</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        {% if tasks is empty %}
-                            <div class="alert alert-warning m-3">
-                                <strong>No hay tareas registradas.</strong>
-                            </div>
-                        {% else %}
-                            <div class="table-responsive">
-                                <table class="table table-bordered">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>📌 Tarea</th>
-                                            <th>📁 Proyecto</th>
-                                            <th class="text-end">💰 Tarifa</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for task in tasks %}
-                                            <tr>
-                                                <td>{{ task.task }}</td>
-                                                <td>{{ task.project }}</td>
-                                                <td class="text-end">${{ task.rate|number_format(0, ',', '.') }}</td>
-                                            </tr>
-                                        {% endfor %}
-                                    </tbody>
-                                </table>
-                            </div>
-                        {% endif %}
-                    </div>
+<div class="container py-5">
+    <!-- Selector de usuario -->
+    <div class="row mb-4">
+        <div class="col-md-6 offset-md-3">
+            <label for="userSelect" class="form-label fw-semibold">Selecciona un usuario:</label>
+            <select id="userSelect" class="form-select shadow-sm">
+                {% for u in users %}
+                    <option value="{{ u.id }}" {% if u.id == user.id %}selected{% endif %}>{{ u.id }} - {{ u.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <!-- Tarjeta de tareas -->
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0" id="taskTitle">Listado de Tareas de {{ user.name }}</h5>
                 </div>
+                <ul id="taskList" class="list-group list-group-flush">
+                    {% for row in tasks %}
+                        <li class="list-group-item">
+                            <h6 class="mb-1">{{ row.task }}</h6>
+                            <div><strong>Proyecto:</strong> {{ row.project }}</div>
+                            <div><strong>Tarifa:</strong> ${{ row.rate|number_format(0, ',', '.') }}</div>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item text-center text-muted">
+                            No hay tareas para este usuario.
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const select = document.getElementById('userSelect');
+            const taskList = document.getElementById('taskList');
+            const taskTitle = document.getElementById('taskTitle');
+
+            select.addEventListener('change', function () {
+                const userId = this.value;
+
+                fetch(`/user/${userId}/tasks`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    taskList.innerHTML = '';
+
+                    if (data.tasks.length === 0) {
+                        taskList.innerHTML = '<li class="list-group-item text-center text-muted">No hay tareas para este usuario.</li>';
+                    } else {
+                        data.tasks.forEach(task => {
+                            taskList.innerHTML += `
+                                <li class="list-group-item">
+                                    <h6 class="mb-1">${task.task}</h6>
+                                    <div><strong>Proyecto:</strong> ${task.project}</div>
+                                    <div><strong>Tarifa:</strong> $${Number(task.rate).toLocaleString()}</div>
+                                </li>
+                            `;
+                        });
+                    }
+
+                    taskTitle.textContent = `Listado de Tareas de ${data.user.name}`;
+                    history.pushState(null, '', `/user/${data.user.id}/tasks`);
+                });
+            });
+        });
+    </script>
 {% endblock %}
